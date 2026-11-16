@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Vri åtter</title>
+<style>
+  :root {
+    --gron: #2e7d32;
+    --gron-mork: #1b5e20;
+    --filt: #1f6b45;
+    --filt-mork: #0e3a25;
+    --bakgrunn: #12181b;
+    --panel: #1c2529;
+    --tekst: #eef3ef;
+    --dempa: #9fb0a6;
+    --gull: #ffd54a;
+    --raud: #c62828;
+    --kort-b: clamp(46px, 12.5vw, 80px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bakgrunn); color: var(--tekst);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+  }
+  header.tittel {
+    background: var(--gron); color: #fff; padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    box-shadow: 0 3px 0 var(--gron-mork);
+  }
+  header.tittel .heim { color: #fff; text-decoration: none; font-size: .9rem; background: rgba(0,0,0,.25); padding: 3px 10px; border-radius: 999px; }
+  header.tittel h1 { font-size: 1.15rem; margin: 0; }
+  header.tittel .info { margin-left: auto; font-size: .9rem; font-variant-numeric: tabular-nums; }
+  @media (max-width: 430px) { header.tittel .lang { display: none; } }
+  main { width: 100%; max-width: 760px; margin: 0 auto; padding: 12px; }
+
+  .bord {
+    background: radial-gradient(ellipse at center, var(--filt) 0%, var(--filt-mork) 100%);
+    border: 6px solid #3b2a1a; border-radius: 28px; padding: 14px 10px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,.45), 0 8px 24px rgba(0,0,0,.5);
+  }
+  .sete { display: flex; flex-direction: column; align-items: center; gap: 6px; border-radius: 18px; padding: 4px 6px; transition: background .3s, box-shadow .3s; }
+  .sete.vinnar { background: rgba(255, 213, 74, .16); box-shadow: 0 0 0 2px var(--gull), 0 0 26px rgba(255, 213, 74, .55); }
+  .sete .namn { font-weight: 600; display: flex; gap: 8px; align-items: center; }
+  .sete.vinnar .namn::after { content: "🏆 Vinnar"; color: var(--gull); font-size: .9rem; }
+  .tal { background: rgba(0,0,0,.35); border-radius: 999px; padding: 2px 12px; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .snakk { min-height: 1.7em; font-size: .92rem; background: #fff; color: #1b1b1b; border-radius: 12px; padding: 2px 12px; visibility: hidden; }
+  .snakk.synleg { visibility: visible; }
+  .hand { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; min-height: calc(var(--kort-b) * 1.4); }
+  .hand.bot { flex-wrap: nowrap; gap: 0; }
+  .hand.bot .kort { margin-left: calc(var(--kort-b) * -.62); }
+  .hand.bot .kort:first-child { margin-left: 0; }
+  .midten { margin: 14px 0; display: flex; align-items: center; justify-content: center; gap: clamp(10px, 4vw, 26px); }
+  .stokk { position: relative; cursor: pointer; }
+  .stokk .teljar { position: absolute; right: -6px; bottom: -8px; background: #0f1518; border-radius: 999px; font-size: .75rem; padding: 1px 7px; }
+  .stokk.kall .kort { box-shadow: 0 0 0 3px var(--gull), 0 0 16px rgba(255, 213, 74, .8); }
+  .fargeno { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .85rem; color: #d7ecd9; }
+  .fargeno b {
+    display: flex; align-items: center; justify-content: center;
+    width: calc(var(--kort-b) * .8); height: calc(var(--kort-b) * .8); border-radius: 50%;
+    background: #fdfdfb; color: #151515; font-size: calc(var(--kort-b) * .55); line-height: 1;
+  }
+  .fargeno b.raud { color: var(--raud); }
+  .fargeno.vridd b { box-shadow: 0 0 0 3px var(--gull); }
+
+  .kort {
+    width: var(--kort-b); aspect-ratio: 5 / 7; border-radius: calc(var(--kort-b) * .1);
+    background: #fdfdfb; color: #151515; position: relative; flex: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,.45);
+  }
+  .kort.ny { animation: inn .25s ease-out; }
+  .kort.raud { color: var(--raud); }
+  .kort .r { position: absolute; top: 4%; left: 9%; font-weight: 800; font-size: calc(var(--kort-b) * .34); line-height: 1; }
+  .kort .s { position: absolute; bottom: 6%; right: 9%; font-size: calc(var(--kort-b) * .58); line-height: 1; }
+  .kort.bak { background: repeating-linear-gradient(45deg, #7b1f1f 0 6px, #972b2b 6px 12px); border: 3px solid #fdfdfb; }
+  .kort.tom { background: rgba(255,255,255,.07); box-shadow: none; border: 1px dashed rgba(255,255,255,.25); }
+  #hand0 .kort { cursor: default; transition: transform .15s, filter .15s; }
+  #hand0.aktiv .kort.kan { cursor: pointer; transform: translateY(-8px); box-shadow: 0 0 0 3px var(--gull), 0 4px 10px rgba(0,0,0,.5); }
+  #hand0.aktiv .kort:not(.kan) { filter: brightness(.62); }
+  @keyframes inn { from { transform: translateY(-8px); opacity: 0; } to { opacity: 1; } }
+
+  #banner {
+    font-size: clamp(1.2rem, 5.2vw, 1.8rem); font-weight: 800; text-align: center;
+    padding: 8px 22px; border-radius: 14px; box-shadow: 0 6px 22px rgba(0,0,0,.55);
+    margin: 0 auto 10px; width: fit-content; animation: pop .4s cubic-bezier(.2, 1.6, .4, 1);
+  }
+  #banner.du { background: var(--gull); color: #2a2100; }
+  #banner.bot { background: #7f1d1d; color: #fff; }
+  #banner.delt { background: #cfd8dc; color: #1c2529; }
+  @keyframes pop { from { transform: scale(.5); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .kort.ny, #banner { animation: none; } }
+
+  .panel { background: var(--panel); border-radius: 14px; padding: 12px; margin-top: 12px; }
+  #status { min-height: 1.5em; font-weight: 600; margin-bottom: 10px; text-align: center; }
+  .rad { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  button {
+    font: inherit; font-weight: 700; color: #fff; cursor: pointer; border: 0; border-radius: 10px;
+    padding: 12px 16px; min-width: 96px; background: #455a64; box-shadow: 0 4px 0 rgba(0,0,0,.4);
+  }
+  button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.4); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.hovud { background: var(--gron); box-shadow: 0 4px 0 var(--gron-mork); }
+  button.syn { background: #2d6da3; }
+  #bLyd { min-width: 0; padding: 4px 10px; background: rgba(0,0,0,.25); box-shadow: none; font-size: 1.05rem; }
+  .skjult { display: none !important; }
+  #veljar { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 20; }
+  #veljar .boks { background: var(--panel); border-radius: 16px; padding: 18px; text-align: center; max-width: 340px; width: 90%; }
+  #veljar h2 { margin: 0 0 12px; font-size: 1.1rem; }
+  #veljar .val { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  #veljar button { min-width: 0; padding: 8px 0; font-size: 2rem; background: #fdfdfb; color: #151515; }
+  #veljar button.raud { color: var(--raud); }
+  details { margin-top: 12px; color: var(--dempa); font-size: .9rem; }
+  details summary { cursor: pointer; color: var(--tekst); }
+  footer { text-align: center; color: var(--dempa); font-size: .8rem; padding: 10px; }
+</style>
+</head>
+<body>
+<header class="tittel">
+  <a class="heim" href="./" aria-label="Til framsida">← <span class="lang">Kortspel</span></a>
+  <h1>Vri åtter</h1>
+  <span class="info" id="info"></span>
+  <button id="bLyd" aria-label="Lyd av eller på" title="Lyd av/på">🔊</button>
+</header>
+
+<main>
+  <section class="bord" aria-label="Spelebord">
+    <div class="sete" id="sete1">
+      <div class="namn">Boten <span class="tal" id="tal1"></span></div>
+      <div class="snakk" id="snakk"></div>
+      <div class="hand bot" id="hand1"></div>
+    </div>
+
+    <div class="midten">
+      <div class="stokk" id="stokk" title="Trekk eit kort"></div>
+      <div id="kast"></div>
+      <div class="fargeno" id="fargeno"><span>Farge no</span><b id="fargeteikn"></b></div>
+    </div>
+    <div id="banner" class="skjult" role="alert"></div>
+
+    <div class="sete" id="sete0">
+      <div class="hand" id="hand0"></div>
+      <div class="namn">Du <span class="tal" id="tal0"></span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div id="status" role="status" aria-live="polite"></div>
+    <div class="rad" id="handlingar">
+      <button class="syn" id="bTrekk">Trekk kort</button>
+      <button id="bPass">Pass</button>
+    </div>
+    <div class="rad skjult" id="mellom">
+      <button class="hovud" id="bNeste">Ny runde</button>
+    </div>
+  </section>
+
+  <details>
+    <summary>Reglar</summary>
+    <p>Begge får fem kort. Målet er å bli kvitt alle korta først.</p>
+    <p>Du legg eit kort som har same farge (♠ ♥ ♦ ♣) eller same verdi som kortet øvst i kastebunken. Ein åttar kan leggjast på kva som helst, og den som legg han, vel kva farge som gjeld vidare.</p>
+    <p>Har du ikkje noko som passar, trekkjer du opptil tre kort frå bunken. Får du framleis ikkje lagt, må du passe. Når bunken er tom, blir kastebunken stokka og brukt på nytt.</p>
+  </details>
+</main>
+<footer>Laga for moro skuld.</footer>
+
+<div id="veljar" class="skjult" role="dialog" aria-label="Vel farge">
+  <div class="boks">
+    <h2>Du vrir! Vel farge:</h2>
+    <div class="val">
+      <button data-f="0" aria-label="Spar">♠</button>
+      <button data-f="1" class="raud" aria-label="Hjarter">♥</button>
+      <button data-f="2" class="raud" aria-label="Ruter">♦</button>
+      <button data-f="3" aria-label="Kløver">♣</button>
+    </div>
+  </div>
+</div>
+
+<script id="motor">
+/* ===== Spelmotor for Vri åtter (spelar 0 = du, spelar 1 = boten) ===== */
+const Vri = (() => {
+  const RANKS = '23456789TJQKA', ATTER = 6;
+  const rang = (c) => c >> 2, farge = (c) => c & 3;
+
+  function stokk(a, rng) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function nyRunde(startar, rng) {
+    rng = rng || Math.random;
+    const d = [];
+    for (let i = 0; i < 52; i++) d.push(i);
+    stokk(d, rng);
+    const g = { bunke: d, hender: [[], []], kast: [], tur: startar, trekt: 0, pass: 0, fase: 'spel', vinnar: null, rng };
+    for (let i = 0; i < 5; i++) { g.hender[0].push(d.pop()); g.hender[1].push(d.pop()); }
+    let c = d.pop();
+    while (rang(c) === ATTER) { d.unshift(c); c = d.pop(); } // startkortet skal ikkje vere ein åttar
+    g.kast.push(c); g.farge = farge(c);
+    return g;
+  }
+
+  const topp = (g) => g.kast[g.kast.length - 1];
+  const kanSpele = (g, c) => rang(c) === ATTER || farge(c) === g.farge || rang(c) === rang(topp(g));
+  const spelbare = (g, p) => g.hender[p].filter((c) => kanSpele(g, c));
+  const kanTrekke = (g) => g.trekt < 3 && (g.bunke.length > 0 || g.kast.length > 1);
+
+  function spel(g, p, c, nyFarge) {
+    const h = g.hender[p], i = h.indexOf(c);
+    if (g.fase !== 'spel' || g.tur !== p || i < 0 || !kanSpele(g, c)) throw new Error('Ulovleg kort');
+    h.splice(i, 1); g.kast.push(c);
+    g.farge = rang(c) === ATTER ? (nyFarge === undefined ? farge(c) : nyFarge) : farge(c);
+    g.trekt = 0; g.pass = 0;
+    if (!h.length) { g.vinnar = p; g.fase = 'ferdig'; } else g.tur = 1 - p;
+  }
+
+  function trekk(g, p) {
+    if (g.fase !== 'spel' || g.tur !== p || !kanTrekke(g)) throw new Error('Kan ikkje trekkje');
+    if (!g.bunke.length) { // stokk kastebunken om, bortsett frå det øvste kortet
+      const t = g.kast.pop();
+      g.bunke = stokk(g.kast, g.rng); g.kast = [t];
+    }
+    const c = g.bunke.pop();
+    g.hender[p].push(c); g.trekt++;
+    return c;
+  }
+
+  function pass(g, p) {
+    if (g.fase !== 'spel' || g.tur !== p || kanTrekke(g)) throw new Error('Kan ikkje passe enno');
+    g.pass++; g.trekt = 0; g.tur = 1 - p;
+    // Fastlåst: begge har passa og det finst ikkje fleire kort å trekkje
+    if (g.pass >= 2 && !g.bunke.length && g.kast.length <= 1) {
+      const a = g.hender[0].length, b = g.hender[1].length;
+      g.vinnar = a < b ? 0 : b < a ? 1 : -1; g.fase = 'ferdig'; g.fastlast = true;
+    }
+  }
+
+  // Boten: legg helst eit vanleg kort i den fargen han har mest av, og sparer åttarane.
+  function botVal(g, rnd) {
+    rnd = rnd || Math.random;
+    const h = g.hender[1], kan = spelbare(g, 1);
+    const tal = [0, 0, 0, 0];
+    for (const c of h) if (rang(c) !== ATTER) tal[farge(c)]++;
+    const vanlege = kan.filter((c) => rang(c) !== ATTER);
+    if (vanlege.length) {
+      let best = vanlege[0], bp = -1;
+      for (const c of vanlege) {
+        const p = tal[farge(c)] + rnd() * 0.5;
+        if (p > bp) { bp = p; best = c; }
+      }
+      return { type: 'spel', kort: best };
+    }
+    if (kan.length) {
+      let f = 0;
+      for (let i = 1; i < 4; i++) if (tal[i] > tal[f]) f = i;
+      if (tal[f] === 0) f = Math.floor(rnd() * 4);
+      return { type: 'spel', kort: kan[0], farge: f };
+    }
+    return kanTrekke(g) ? { type: 'trekk' } : { type: 'pass' };
+  }
+
+  return { RANKS, ATTER, rang, farge, nyRunde, topp, kanSpele, spelbare, kanTrekke, spel, trekk, pass, botVal };
+})();
+</script>
+
+<script>
+/* ===== Brukargrensesnitt ===== */
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const TEIKN = ['♠', '♥', '♦', '♣'], FNAMN = ['spar', 'hjarter', 'ruter', 'kløver'];
+  const sov = (ms) => new Promise((r) => setTimeout(r, ms));
+  const FART = window.VRI_FART === undefined ? 1 : window.VRI_FART;
+
+  const Lyd = (() => {
+    let ctx = null, paa = true;
+    try { paa = localStorage.getItem('kortspelLyd') !== 'av'; } catch (e) {}
+    function ac() {
+      if (!paa) return null;
+      try {
+        if (!ctx) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; ctx = new A(); }
+        if (ctx.state !== 'running') { ctx.resume(); return null; }
+        return ctx;
+      } catch (e) { return null; }
+    }
+    function tone(f, t0, dur, type, vol, f2) {
+      const c = ac(); if (!c) return;
+      const o = c.createOscillator(), v = c.createGain(), t = c.currentTime + t0;
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+      v.gain.setValueAtTime(0.0001, t);
+      v.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+      v.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(v); v.connect(c.destination); o.start(t); o.stop(t + dur + 0.03);
+    }
+    function sus(t0, dur, vol) {
+      const c = ac(); if (!c) return;
+      const n = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const src = c.createBufferSource(), fl = c.createBiquadFilter(), v = c.createGain();
+      src.buffer = buf; fl.type = 'highpass'; fl.frequency.value = 2500; v.gain.value = vol;
+      src.connect(fl); fl.connect(v); v.connect(c.destination); src.start(c.currentTime + t0);
+    }
+    return {
+      get paa() { return paa; },
+      byt() { paa = !paa; try { localStorage.setItem('kortspelLyd', paa ? 'paa' : 'av'); } catch (e) {} if (paa) ac(); return paa; },
+      vekk() { ac(); },
+      kort(n) { for (let i = 0; i < (n || 1); i++) sus(i * 0.09, 0.07, 0.3); },
+      vri() { tone(440, 0, 0.25, 'triangle', 0.2, 880); },
+      pass() { tone(150, 0, 0.07, 'sine', 0.5, 80); tone(150, 0.13, 0.07, 'sine', 0.5, 80); },
+      vinn() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.1, 0.28, 'triangle', 0.2)); },
+      tap() { tone(330, 0, 0.28, 'sine', 0.22, 247); tone(247, 0.25, 0.45, 'sine', 0.22, 165); }
+    };
+  })();
+
+  let g, modus = 'vent', botSeier = '', runde = 0, poeng = [0, 0], ventarAtter = null, nyeKort = new Set();
+
+  function kortHTML(c, klasse) {
+    if (c === null) return '<div class="kort bak"></div>';
+    const r = Vri.RANKS[Vri.rang(c)], s = Vri.farge(c);
+    return '<div data-c="' + c + '" class="kort' + (s === 1 || s === 2 ? ' raud' : '') + (klasse || '') + '" aria-label="' +
+      FNAMN[s] + ' ' + (r === 'T' ? '10' : r) + '"><span class="r">' + (r === 'T' ? '10' : r) + '</span><span class="s">' + TEIKN[s] + '</span></div>';
+  }
+  const kortNamn = (c) => TEIKN[Vri.farge(c)] + (Vri.RANKS[Vri.rang(c)] === 'T' ? '10' : Vri.RANKS[Vri.rang(c)]);
+  function status(t) { $('status').textContent = t; }
+
+  function teikn() {
+    const tur = modus === 'tur', ferdig = g.fase === 'ferdig';
+    $('info').textContent = 'Du ' + poeng[0] + ' – ' + poeng[1] + ' Boten';
+    $('tal0').textContent = g.hender[0].length + ' kort';
+    $('tal1').textContent = g.hender[1].length + ' kort';
+    $('hand1').innerHTML = ferdig ? g.hender[1].map((c) => kortHTML(c)).join('') : g.hender[1].map(() => kortHTML(null)).join('');
+    $('hand1').classList.toggle('bot', !ferdig);
+    const mine = g.hender[0].slice().sort((a, b) => (Vri.farge(a) - Vri.farge(b)) || (Vri.rang(a) - Vri.rang(b)));
+    $('hand0').innerHTML = mine.map((c) => kortHTML(c, (Vri.kanSpele(g, c) ? ' kan' : '') + (nyeKort.has(c) ? ' ny' : ''))).join('');
+    nyeKort.clear();
+    $('hand0').classList.toggle('aktiv', tur);
+    const kanT = tur && Vri.kanTrekke(g);
+    $('stokk').innerHTML = (g.bunke.length ? kortHTML(null) : '<div class="kort tom"></div>') + '<span class="teljar">' + g.bunke.length + '</span>';
+    $('stokk').classList.toggle('kall', kanT && !Vri.spelbare(g, 0).length);
+    $('kast').innerHTML = kortHTML(Vri.topp(g));
+    const ft = $('fargeteikn');
+    ft.textContent = TEIKN[g.farge]; ft.className = g.farge === 1 || g.farge === 2 ? 'raud' : '';
+    $('fargeno').classList.toggle('vridd', g.farge !== Vri.farge(Vri.topp(g)));
+    $('snakk').textContent = botSeier;
+    $('snakk').classList.toggle('synleg', !!botSeier);
+    for (let i = 0; i < 2; i++) $('sete' + i).classList.toggle('vinnar', ferdig && g.vinnar === i);
+    $('banner').classList.toggle('skjult', !ferdig);
+    $('handlingar').classList.toggle('skjult', modus === 'neste');
+    $('mellom').classList.toggle('skjult', modus !== 'neste');
+    $('bTrekk').disabled = !kanT;
+    $('bTrekk').textContent = 'Trekk kort' + (tur ? ' (' + (3 - g.trekt) + ' att)' : '');
+    $('bPass').disabled = !tur || Vri.kanTrekke(g);
+  }
+
+  function minTur() {
+    modus = 'tur'; teikn();
+    if (Vri.spelbare(g, 0).length) status('Din tur. Legg eit av korta som er løfta fram.');
+    else if (Vri.kanTrekke(g)) status('Ingen kort passar. Trekk frå bunken (' + (3 - g.trekt) + ' att).');
+    else status('Ingen kort passar, og du kan ikkje trekkje fleire. Du må passe.');
+  }
+
+  async function vidare() {
+    for (;;) {
+      if (g.fase === 'ferdig') return visResultat();
+      if (g.tur === 0) return minTur();
+      modus = 'vent'; status('Boten tenkjer …'); teikn();
+      await sov((550 + Math.random() * 500) * FART);
+      const a = Vri.botVal(g);
+      if (a.type === 'spel') {
+        Vri.spel(g, 1, a.kort, a.farge);
+        const atter = Vri.rang(a.kort) === Vri.ATTER;
+        botSeier = 'Legg ' + kortNamn(a.kort) + (atter ? ' og vrir til ' + TEIKN[g.farge] : '');
+        if (atter) Lyd.vri(); else Lyd.kort();
+      } else if (a.type === 'trekk') {
+        Vri.trekk(g, 1); botSeier = 'Trekkjer eit kort'; Lyd.kort();
+      } else {
+        Vri.pass(g, 1); botSeier = 'Passar'; Lyd.pass();
+      }
+      status('Boten: ' + botSeier.charAt(0).toLowerCase() + botSeier.slice(1) + '.');
+    }
+  }
+
+  function visResultat() {
+    const v = g.vinnar;
+    if (v >= 0) poeng[v]++;
+    const bn = $('banner');
+    bn.className = v === 0 ? 'du' : v === 1 ? 'bot' : 'delt';
+    bn.textContent = v === 0 ? '🏆 Du vann runden!' : v === 1 ? 'Boten vann runden' : 'Uavgjort';
+    let t = v === 0 ? 'Du vart kvitt alle korta først.' : v === 1 ? 'Boten vart kvitt korta sine først.' : 'Ingen kunne leggje, og de har like mange kort.';
+    if (g.fastlast && v >= 0) t = 'Spelet låste seg. ' + (v === 0 ? 'Du' : 'Boten') + ' vinn med færrast kort.';
+    modus = 'neste'; status(t); teikn();
+    if (v === 0) Lyd.vinn(); else if (v === 1) Lyd.tap();
+  }
+
+  function nyRunde() {
+    runde++;
+    g = Vri.nyRunde(runde % 2 === 1 ? 0 : 1);
+    botSeier = ''; ventarAtter = null; modus = 'vent';
+    Lyd.kort(3);
+    vidare();
+  }
+
+  function leggKort(c, nyFarge) {
+    Vri.spel(g, 0, c, nyFarge);
+    if (Vri.rang(c) === Vri.ATTER) Lyd.vri(); else Lyd.kort();
+    botSeier = '';
+    modus = 'vent';
+    vidare();
+  }
+
+  $('hand0').addEventListener('click', (e) => {
+    const el = e.target.closest('.kort');
+    if (!el || modus !== 'tur') return;
+    const c = +el.dataset.c;
+    if (!Vri.kanSpele(g, c)) { status('Det kortet passar ikkje. Du treng ' + FNAMN[g.farge] + ', same verdi eller ein åttar.'); return; }
+    if (Vri.rang(c) === Vri.ATTER && g.hender[0].length > 1) { ventarAtter = c; $('veljar').classList.remove('skjult'); return; }
+    leggKort(c);
+  });
+  $('veljar').addEventListener('click', (e) => {
+    const k = e.target.closest('button');
+    if (!k) { if (e.target === $('veljar')) { $('veljar').classList.add('skjult'); ventarAtter = null; } return; }
+    $('veljar').classList.add('skjult');
+    const c = ventarAtter; ventarAtter = null;
+    if (c !== null && modus === 'tur') leggKort(c, +k.dataset.f);
+  });
+  function trekk() {
+    if (modus !== 'tur' || !Vri.kanTrekke(g)) return;
+    nyeKort.add(Vri.trekk(g, 0));
+    Lyd.kort();
+    minTur();
+  }
+  $('bTrekk').onclick = trekk;
+  $('stokk').onclick = trekk;
+  $('bPass').onclick = () => {
+    if (modus !== 'tur' || Vri.kanTrekke(g)) return;
+    Vri.pass(g, 0); Lyd.pass(); modus = 'vent';
+    vidare();
+  };
+  $('bNeste').onclick = nyRunde;
+  const visLyd = () => { $('bLyd').textContent = Lyd.paa ? '🔊' : '🔇'; };
+  $('bLyd').onclick = () => { Lyd.byt(); visLyd(); };
+  visLyd();
+  document.addEventListener('pointerdown', () => Lyd.vekk(), { once: true });
+
+  window.__vri = { get g() { return g; }, get modus() { return modus; }, get poeng() { return poeng; } };
+  nyRunde();
+})();
+</script>
+</body>
+</html>

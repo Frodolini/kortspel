@@ -40,6 +40,7 @@
     box-shadow: 0 3px 0 var(--gron-mork);
   }
   header.tittel .heim { color: #fff; text-decoration: none; font-size: .9rem; background: rgba(0,0,0,.25); padding: 3px 10px; border-radius: 999px; }
+  @media (max-width: 430px) { header.tittel .lang { display: none; } }
   header.tittel h1 { font-size: 1.15rem; margin: 0; letter-spacing: .02em; }
   header.tittel .info { margin-left: auto; font-size: .9rem; opacity: .95; }
   main { width: 100%; max-width: 760px; margin: 0 auto; padding: 12px; flex: 1; }
@@ -144,7 +145,7 @@
 </head>
 <body>
 <header class="tittel">
-  <a class="heim" href="./" aria-label="Til framsida">← Kortspel</a>
+  <a class="heim" href="./" aria-label="Til framsida">← <span class="lang">Kortspel</span></a>
   <h1>♠ Texas Hold'em – ein mot ein</h1>
   <span class="info" id="info"></span>
   <button id="bLyd" aria-label="Lyd av eller på" title="Lyd av/på">🔊</button>
@@ -508,7 +509,7 @@ const Poker = (() => {
   /* Lyd laga med Web Audio, ingen lydfiler. */
   const Lyd = (() => {
     let ctx = null, paa = true;
-    try { paa = localStorage.getItem('pokerLyd') !== 'av'; } catch (e) {}
+    try { paa = localStorage.getItem('kortspelLyd') !== 'av'; } catch (e) {}
     function ac() {
       if (!paa) return null;
       try {
@@ -538,7 +539,7 @@ const Poker = (() => {
     const melodi = (ns, steg, dur, type, vol) => ns.forEach((f, i) => tone(f, i * steg, dur, type, vol));
     return {
       get paa() { return paa; },
-      byt() { paa = !paa; try { localStorage.setItem('pokerLyd', paa ? 'paa' : 'av'); } catch (e) {} if (paa) ac(); return paa; },
+      byt() { paa = !paa; try { localStorage.setItem('kortspelLyd', paa ? 'paa' : 'av'); } catch (e) {} if (paa) ac(); return paa; },
       vekk() { ac(); },
       kort(n) { for (let i = 0; i < (n || 1); i++) sus(i * 0.09, 0.07, 0.3, 'highpass', 2500); },
       sjetong(n) { for (let i = 0; i < (n || 2); i++) { const f = 2400 + Math.random() * 900; tone(f, i * 0.055, 0.06, 'triangle', 0.14); tone(f * 1.52, i * 0.055, 0.04, 'sine', 0.07); } },
