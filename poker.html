@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Texas Hold'em – ein mot ein</title>
+<style>
+  :root {
+    --gron: #2e7d32;
+    --gron-mork: #1b5e20;
+    --filt: #1f6b45;
+    --filt-mork: #0e3a25;
+    --bakgrunn: #12181b;
+    --panel: #1c2529;
+    --tekst: #eef3ef;
+    --dempa: #9fb0a6;
+    --gull: #ffd54a;
+    --raud: #c62828;
+    --kort-b: clamp(46px, 12.5vw, 84px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bakgrunn);
+    color: var(--tekst);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header.tittel {
+    background: var(--gron);
+    color: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    box-shadow: 0 3px 0 var(--gron-mork);
+  }
+  header.tittel .heim { color: #fff; text-decoration: none; font-size: .9rem; background: rgba(0,0,0,.25); padding: 3px 10px; border-radius: 999px; }
+  header.tittel h1 { font-size: 1.15rem; margin: 0; letter-spacing: .02em; }
+  header.tittel .info { margin-left: auto; font-size: .9rem; opacity: .95; }
+  main { width: 100%; max-width: 760px; margin: 0 auto; padding: 12px; flex: 1; }
+
+  .bord {
+    background: radial-gradient(ellipse at center, var(--filt) 0%, var(--filt-mork) 100%);
+    border: 6px solid #3b2a1a;
+    border-radius: 28px;
+    padding: 14px 10px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,.45), 0 8px 24px rgba(0,0,0,.5);
+  }
+  .sete { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .sete .namn { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .stabel { background: rgba(0,0,0,.35); border-radius: 999px; padding: 2px 12px; font-variant-numeric: tabular-nums; }
+  .stabel::before { content: "● "; color: var(--gull); }
+  .knapp-d {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; color: #222; font-size: .75rem; font-weight: 800;
+    border: 2px solid var(--gull);
+  }
+  .kortrad { display: flex; gap: 6px; justify-content: center; min-height: calc(var(--kort-b) * 1.4); }
+  .innsats { min-height: 1.6em; font-variant-numeric: tabular-nums; color: var(--gull); font-weight: 600; }
+  .snakk {
+    min-height: 1.7em; font-size: .92rem; background: #fff; color: #1b1b1b;
+    border-radius: 12px; padding: 2px 12px; visibility: hidden;
+  }
+  .snakk.synleg { visibility: visible; }
+  .midten { margin: 10px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .pott { font-size: 1.05rem; font-weight: 700; background: rgba(0,0,0,.35); border-radius: 999px; padding: 3px 16px; }
+  .handnamn { min-height: 1.4em; font-size: .92rem; color: #d7ecd9; }
+  .bord { position: relative; }
+  .sete { border-radius: 18px; padding: 4px 10px; transition: background .3s, box-shadow .3s; }
+  .sete.vinnar { background: rgba(255, 213, 74, .16); box-shadow: 0 0 0 2px var(--gull), 0 0 26px rgba(255, 213, 74, .55); }
+  .sete.vinnar .namn::after { content: "🏆 Vinnar"; color: var(--gull); font-size: .9rem; }
+  .sete.tapar { opacity: .75; }
+  .vinnar .stabel { outline: 2px solid var(--gull); }
+  .sjetongar { display: flex; gap: 3px; align-items: flex-end; justify-content: center; min-height: 36px; }
+  .sjetongar.liten { display: inline-flex; min-height: 0; vertical-align: bottom; margin-right: 6px; }
+  .soyle { display: flex; flex-direction: column-reverse; }
+  .sj {
+    display: block; width: 30px; height: 7px; border-radius: 3px; margin-top: -1px;
+    border: 1px solid rgba(0,0,0,.6);
+    background: repeating-linear-gradient(90deg, var(--f) 0 5px, #f4f4f4 5px 8px);
+  }
+  #banner {
+    font-size: clamp(1.25rem, 5.5vw, 1.9rem); font-weight: 800; text-align: center;
+    padding: 8px 22px; border-radius: 14px; box-shadow: 0 6px 22px rgba(0,0,0,.55);
+    animation: pop .4s cubic-bezier(.2, 1.6, .4, 1);
+  }
+  #banner.du { background: var(--gull); color: #2a2100; }
+  #banner.bot { background: #7f1d1d; color: #fff; }
+  #banner.delt { background: #cfd8dc; color: #1c2529; }
+  @keyframes pop { from { transform: scale(.5); opacity: 0; } to { transform: none; opacity: 1; } }
+  .kort.vinnarkort { box-shadow: 0 0 0 3px var(--gull), 0 0 16px rgba(255, 213, 74, .8); transform: translateY(-6px); transition: transform .25s; }
+  .kort.dempa { filter: brightness(.55); }
+  #bLyd { min-width: 0; padding: 4px 10px; background: rgba(0,0,0,.25); box-shadow: none; font-size: 1.05rem; }
+
+  .kort {
+    width: var(--kort-b); aspect-ratio: 5 / 7;
+    border-radius: calc(var(--kort-b) * .1);
+    background: #fdfdfb; color: #151515;
+    position: relative; flex: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,.45);
+  }
+  .kort.ny { animation: inn .25s ease-out; }
+  .kort.raud { color: var(--raud); }
+  .kort .r { position: absolute; top: 4%; left: 9%; font-weight: 800; font-size: calc(var(--kort-b) * .34); line-height: 1; }
+  .kort .s { position: absolute; bottom: 6%; right: 9%; font-size: calc(var(--kort-b) * .58); line-height: 1; }
+  .kort.bak {
+    background: repeating-linear-gradient(45deg, #7b1f1f 0 6px, #972b2b 6px 12px);
+    border: 3px solid #fdfdfb;
+  }
+  .kort.tom { background: rgba(255,255,255,.07); box-shadow: none; border: 1px dashed rgba(255,255,255,.25); }
+  @keyframes inn { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .kort.ny, #banner { animation: none; } }
+
+  .panel { background: var(--panel); border-radius: 14px; padding: 12px; margin-top: 12px; }
+  #status { min-height: 1.5em; font-weight: 600; margin-bottom: 10px; text-align: center; }
+  .rad { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  button {
+    font: inherit; font-weight: 700; color: #fff; cursor: pointer;
+    border: 0; border-radius: 10px; padding: 12px 16px; min-width: 96px;
+    background: #455a64; box-shadow: 0 4px 0 rgba(0,0,0,.4);
+  }
+  button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.4); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.kast { background: #8e2424; }
+  button.syn { background: #2d6da3; }
+  button.hogj, button.hovud { background: var(--gron); box-shadow: 0 4px 0 var(--gron-mork); }
+  button.liten { min-width: 0; padding: 7px 11px; font-weight: 600; font-size: .88rem; background: #37474f; }
+  #hogjrad { margin-top: 12px; align-items: center; }
+  #glidar { flex: 1 1 180px; accent-color: var(--gron); min-width: 140px; }
+  #belop { width: 90px; font: inherit; padding: 7px 8px; border-radius: 8px; border: 1px solid #54656b; background: #0f1518; color: var(--tekst); }
+  .skjult { display: none !important; }
+  #logg { margin-top: 10px; max-height: 7.5em; overflow-y: auto; font-size: .86rem; color: var(--dempa); line-height: 1.45; }
+  details { margin-top: 12px; color: var(--dempa); font-size: .9rem; }
+  details summary { cursor: pointer; color: var(--tekst); }
+  details ol { margin: 8px 0 0; padding-left: 1.4em; }
+  footer { text-align: center; color: var(--dempa); font-size: .8rem; padding: 10px; }
+</style>
+</head>
+<body>
+<header class="tittel">
+  <a class="heim" href="./" aria-label="Til framsida">← Kortspel</a>
+  <h1>♠ Texas Hold'em – ein mot ein</h1>
+  <span class="info" id="info"></span>
+  <button id="bLyd" aria-label="Lyd av eller på" title="Lyd av/på">🔊</button>
+</header>
+
+<main>
+  <section class="bord" aria-label="Pokerbord">
+    <div class="sete" id="sete1">
+      <div class="namn">Boten <span class="stabel" id="stabel1"></span> <span class="knapp-d skjult" id="d1" title="Dealer">D</span></div>
+      <div class="sjetongar" id="sj1"></div>
+      <div class="snakk" id="snakk"></div>
+      <div class="kortrad" id="kort1"></div>
+      <div class="handnamn" id="hand1"></div>
+      <div class="innsats" id="innsats1"></div>
+    </div>
+
+    <div class="midten">
+      <div class="kortrad" id="bordkort"></div>
+      <div class="sjetongar" id="pottsj"></div>
+      <div class="pott" id="pott"></div>
+      <div id="banner" class="skjult" role="alert"></div>
+    </div>
+
+    <div class="sete" id="sete0">
+      <div class="innsats" id="innsats0"></div>
+      <div class="kortrad" id="kort0"></div>
+      <div class="handnamn" id="hand0"></div>
+      <div class="sjetongar" id="sj0"></div>
+      <div class="namn">Du <span class="stabel" id="stabel0"></span> <span class="knapp-d skjult" id="d0" title="Dealer">D</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div id="status" role="status" aria-live="polite"></div>
+    <div class="rad" id="handlingar">
+      <button class="kast" id="bKast">Kast</button>
+      <button class="syn" id="bSyn">Sjekk</button>
+      <button class="hogj" id="bHogj">Høgj</button>
+    </div>
+    <div class="rad" id="hogjrad">
+      <input type="range" id="glidar" aria-label="Storleik på innsats">
+      <input type="number" id="belop" inputmode="numeric" aria-label="Beløp">
+      <button class="liten" data-snarveg="min">Min</button>
+      <button class="liten" data-snarveg="halv">½ pott</button>
+      <button class="liten" data-snarveg="pott">Pott</button>
+      <button class="liten" data-snarveg="alt">All-in</button>
+    </div>
+    <div class="rad skjult" id="mellom">
+      <button class="hovud" id="bNeste">Neste hand</button>
+    </div>
+    <div id="logg" aria-label="Logg for handa"></div>
+  </section>
+
+  <details>
+    <summary>Reglar og handrangering</summary>
+    <p>Kvar spelar får to kort. Fem felleskort blir lagde på bordet (flopp, turn og river), og beste hand på fem kort vinn.
+       Spelaren med D-knappen legg liten blind og handlar først før floppen. Etter floppen handlar den andre først.</p>
+    <ol>
+      <li>Royal straight flush</li><li>Straight flush</li><li>Fire like</li><li>Hus (tre like + par)</li>
+      <li>Flush (fem i same farge)</li><li>Straight (fem i rekkjefølgje)</li><li>Tre like</li><li>To par</li>
+      <li>Eitt par</li><li>Høgt kort</li>
+    </ol>
+    <p>Sjetongar: svart = 100, blå = 50, raud = 10.</p>
+  </details>
+</main>
+<footer>Berre leikepengar. Laga for moro skuld.</footer>
+
+<script id="motor">
+/* ===== Pokermotor: kortstokk, handevaluering, innsatsreglar og bot ===== */
+const Poker = (() => {
+  const RANKS = '23456789TJQKA';
+  const EIN = ['toar','trear','firar','femmar','seksar','sjuar','åttar','niar','tiar','knekt','dame','konge','ess'];
+  const FLEIRE = ['toarar','trearar','firarar','femmarar','seksarar','sjuarar','åttarar','niarar','tiarar','knektar','damer','kongar','ess'];
+
+  const tryggRng = () => {
+    const c = globalThis.crypto;
+    if (c && c.getRandomValues) return c.getRandomValues(new Uint32Array(1))[0] / 4294967296;
+    return Math.random();
+  };
+
+  function nyStokk(rng) {
+    const d = [];
+    for (let i = 0; i < 52; i++) d.push(i);
+    for (let i = 51; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const t = d[i]; d[i] = d[j]; d[j] = t;
+    }
+    return d;
+  }
+
+  function straightTopp(m) {
+    for (let h = 12; h >= 4; h--) if (((m >> (h - 4)) & 31) === 31) return h;
+    if ((m & 0x100F) === 0x100F) return 3; // A-2-3-4-5
+    return -1;
+  }
+  function poeng(kat, ks) {
+    let v = kat;
+    for (let i = 0; i < 5; i++) v = v * 16 + (ks[i] === undefined ? 0 : ks[i]);
+    return v;
+  }
+  // Gir eit tal for beste hand av korta (2–7 kort). Høgare tal = betre hand.
+  function evaluer(cs) {
+    const rc = [0,0,0,0,0,0,0,0,0,0,0,0,0], sc = [0,0,0,0], sm = [0,0,0,0];
+    let mask = 0;
+    for (let i = 0; i < cs.length; i++) {
+      const r = cs[i] >> 2, s = cs[i] & 3;
+      rc[r]++; sc[s]++; sm[s] |= 1 << r; mask |= 1 << r;
+    }
+    let fs = -1;
+    for (let s = 0; s < 4; s++) if (sc[s] >= 5) fs = s;
+    if (fs >= 0) {
+      const sh = straightTopp(sm[fs]);
+      if (sh >= 0) return poeng(8, [sh]);
+    }
+    let fire = -1; const tre = [], par = [], ein = [];
+    for (let r = 12; r >= 0; r--) {
+      if (rc[r] === 4) fire = r;
+      else if (rc[r] === 3) tre.push(r);
+      else if (rc[r] === 2) par.push(r);
+      else if (rc[r] === 1) ein.push(r);
+    }
+    if (fire >= 0) {
+      let k = 0;
+      for (let r = 12; r >= 0; r--) if (r !== fire && rc[r] > 0) { k = r; break; }
+      return poeng(7, [fire, k]);
+    }
+    if (tre.length && (tre.length > 1 || par.length)) {
+      const p = Math.max(tre.length > 1 ? tre[1] : -1, par.length ? par[0] : -1);
+      return poeng(6, [tre[0], p]);
+    }
+    if (fs >= 0) {
+      const ks = [];
+      for (let r = 12; r >= 0 && ks.length < 5; r--) if ((sm[fs] >> r) & 1) ks.push(r);
+      return poeng(5, ks);
+    }
+    const sh = straightTopp(mask);
+    if (sh >= 0) return poeng(4, [sh]);
+    if (tre.length) return poeng(3, [tre[0], ein[0], ein[1]]);
+    if (par.length >= 2) {
+      let k = 0;
+      for (let r = 12; r >= 0; r--) if (r !== par[0] && r !== par[1] && rc[r] > 0) { k = r; break; }
+      return poeng(2, [par[0], par[1], k]);
+    }
+    if (par.length === 1) return poeng(1, [par[0], ein[0], ein[1], ein[2]]);
+    return poeng(0, ein.slice(0, 5));
+  }
+
+  function handNamn(p) {
+    const kat = Math.floor(p / 1048576);
+    const a = Math.floor(p / 65536) % 16, b = Math.floor(p / 4096) % 16;
+    switch (kat) {
+      case 8: return a === 12 ? 'royal straight flush' : 'straight flush til ' + EIN[a];
+      case 7: return 'fire like (' + FLEIRE[a] + ')';
+      case 6: return 'hus, ' + FLEIRE[a] + ' over ' + FLEIRE[b];
+      case 5: return 'flush med ' + EIN[a] + ' høgast';
+      case 4: return 'straight til ' + EIN[a];
+      case 3: return 'tre like (' + FLEIRE[a] + ')';
+      case 2: return 'to par, ' + FLEIRE[a] + ' og ' + FLEIRE[b];
+      case 1: return 'par i ' + FLEIRE[a];
+      default: return 'høgt kort (' + EIN[a] + ')';
+    }
+  }
+
+  // Monte Carlo: vinnarsjanse mot ei tilfeldig hand, med tilfeldige resterande felleskort.
+  function vinnarsjanse(hol, bord, n, rng) {
+    const brukt = new Uint8Array(52);
+    for (const c of hol) brukt[c] = 1;
+    for (const c of bord) brukt[c] = 1;
+    const rest = [];
+    for (let i = 0; i < 52; i++) if (!brukt[i]) rest.push(i);
+    const treng = 5 - bord.length, m = rest.length;
+    const mine = hol.concat(bord), hans = [0, 0].concat(bord);
+    const base = mine.length;
+    let vinn = 0;
+    for (let it = 0; it < n; it++) {
+      for (let i = 0; i < treng + 2; i++) {
+        const j = i + Math.floor(rng() * (m - i));
+        const t = rest[i]; rest[i] = rest[j]; rest[j] = t;
+      }
+      hans[0] = rest[0]; hans[1] = rest[1];
+      for (let i = 0; i < treng; i++) { mine[base + i] = rest[2 + i]; hans[base + i] = rest[2 + i]; }
+      const a = evaluer(mine), o = evaluer(hans);
+      vinn += a > o ? 1 : a === o ? 0.5 : 0;
+    }
+    return vinn / n;
+  }
+
+  /* ---------- Spelet (spelar 0 = du, spelar 1 = boten) ---------- */
+  function nyttSpel(o) {
+    o = o || {};
+    const rng = o.rng || tryggRng;
+    return {
+      stablar: [o.stabel || 1000, o.stabel || 1000],
+      sb: o.sb || 10, bb: o.bb || 20,
+      knapp: rng() < 0.5 ? 0 : 1, handNr: 0, fase: 'pause', rng
+    };
+  }
+
+  function jamnUt(g) {
+    const m = Math.min(g.innsats[0], g.innsats[1]);
+    for (let i = 0; i < 2; i++) if (g.innsats[i] > m) { g.stablar[i] += g.innsats[i] - m; g.innsats[i] = m; }
+  }
+
+  function startHand(g) {
+    g.handNr++;
+    if (g.handNr > 1) g.knapp = 1 - g.knapp;
+    const d = nyStokk(g.rng);
+    g.stokk = d;
+    g.hol = [[d.pop(), d.pop()], [d.pop(), d.pop()]];
+    g.bord = []; g.pott = 0; g.innsats = [0, 0]; g.runde = 0;
+    g.handla = [false, false]; g.resultat = null; g.sisteHogjing = g.bb;
+    const sbS = g.knapp, bbS = 1 - g.knapp;
+    for (const [s, b] of [[sbS, g.sb], [bbS, g.bb]]) {
+      const x = Math.min(b, g.stablar[s]);
+      g.stablar[s] -= x; g.innsats[s] = x;
+    }
+    g.tur = sbS; g.fase = 'innsats';
+    // Nokon er all-in berre av blinden
+    if (g.stablar[sbS] === 0 || (g.stablar[bbS] === 0 && g.innsats[bbS] <= g.innsats[sbS])) {
+      jamnUt(g); sluttRunde(g);
+    }
+  }
+
+  function lovleg(g) {
+    const p = g.tur, o = 1 - p;
+    const maks = Math.max(g.innsats[0], g.innsats[1]);
+    const aSyne = maks - g.innsats[p];
+    const maksTil = Math.min(g.innsats[p] + g.stablar[p], g.innsats[o] + g.stablar[o]);
+    const kanHogje = maksTil > maks;
+    const minTil = Math.min(maks + g.sisteHogjing, maksTil);
+    return {
+      aSyne, synBelop: Math.min(aSyne, g.stablar[p]),
+      kanSjekke: aSyne === 0, kanHogje, minTil, maksTil, maks,
+      pott: g.pott + g.innsats[0] + g.innsats[1]
+    };
+  }
+
+  function handling(g, a) {
+    if (g.fase !== 'innsats') throw new Error('Ingen hand i gang');
+    const p = g.tur, o = 1 - p, L = lovleg(g);
+    if (a.type === 'kast') {
+      const pott = g.pott + g.innsats[0] + g.innsats[1];
+      g.forUtbetaling = g.stablar.slice();
+      g.stablar[o] += pott; g.pott = 0; g.innsats = [0, 0];
+      g.resultat = { type: 'kast', vinnar: o, pott };
+      g.fase = 'ferdig';
+      return;
+    }
+    if (a.type === 'sjekk') {
+      if (!L.kanSjekke) throw new Error('Kan ikkje sjekke');
+    } else if (a.type === 'syn') {
+      if (L.aSyne <= 0) throw new Error('Ingenting å syne');
+      g.stablar[p] -= L.synBelop; g.innsats[p] += L.synBelop;
+      if (g.innsats[p] < g.innsats[o]) jamnUt(g);
+    } else if (a.type === 'hogj') {
+      if (!L.kanHogje) throw new Error('Kan ikkje høgje');
+      const til = Math.max(L.minTil, Math.min(L.maksTil, Math.round(a.til)));
+      const auke = til - L.maks;
+      if (auke >= g.sisteHogjing) g.sisteHogjing = auke;
+      g.stablar[p] -= til - g.innsats[p]; g.innsats[p] = til;
+    } else throw new Error('Ukjend handling');
+    g.handla[p] = true;
+    const likt = g.innsats[0] === g.innsats[1];
+    if (likt && ((g.handla[0] && g.handla[1]) || g.stablar[0] === 0 || g.stablar[1] === 0)) sluttRunde(g);
+    else g.tur = o;
+  }
+
+  function sluttRunde(g) {
+    g.pott += g.innsats[0] + g.innsats[1];
+    g.innsats = [0, 0]; g.handla = [false, false]; g.sisteHogjing = g.bb;
+    if (g.runde === 3) return visning(g);
+    if (g.stablar[0] === 0 || g.stablar[1] === 0) {
+      while (g.bord.length < 5) g.bord.push(g.stokk.pop());
+      g.runde = 3; g.allInn = true;
+      return visning(g);
+    }
+    g.runde++;
+    const n = g.runde === 1 ? 3 : 1;
+    for (let i = 0; i < n; i++) g.bord.push(g.stokk.pop());
+    g.tur = 1 - g.knapp;
+  }
+
+  function visning(g) {
+    const s = [evaluer(g.hol[0].concat(g.bord)), evaluer(g.hol[1].concat(g.bord))];
+    const pott = g.pott;
+    g.forUtbetaling = g.stablar.slice();
+    let vinnar = -1;
+    if (s[0] > s[1]) vinnar = 0; else if (s[1] > s[0]) vinnar = 1;
+    if (vinnar >= 0) g.stablar[vinnar] += pott;
+    else {
+      const halv = Math.floor(pott / 2);
+      g.stablar[g.knapp] += halv; g.stablar[1 - g.knapp] += pott - halv;
+    }
+    g.pott = 0;
+    g.resultat = { type: 'visning', vinnar, pott, poeng: s };
+    g.fase = 'ferdig';
+  }
+
+  /* ---------- Boten ---------- */
+  // Boten ser berre sine eigne kort og bordet. Han reknar ut vinnarsjansen med
+  // Monte Carlo og samanliknar med pott-oddsa, med litt bløff og tilfeldig variasjon.
+  function botVal(g, rnd) {
+    rnd = rnd || Math.random;
+    const p = g.tur, o = 1 - p, L = lovleg(g);
+    const eq = vinnarsjanse(g.hol[p], g.bord, g.runde === 0 ? 500 : 900, rnd);
+    const pott = L.pott, bb = g.bb, steg = g.sb;
+    const iPosisjon = g.runde > 0 && p === g.knapp;
+
+    const hogjTil = (til) => {
+      til = Math.round(til / steg) * steg;
+      til = Math.max(L.minTil, Math.min(L.maksTil, til));
+      if (L.maksTil - til < 0.35 * til) til = L.maksTil; // lite att: gå all-in
+      return { type: 'hogj', til };
+    };
+    const satsDel = (del) => hogjTil(L.maks + del * (pott + L.synBelop));
+
+    if (L.aSyne > 0) {
+      const odds = L.synBelop / (pott + L.synBelop);
+      if (g.runde === 0 && g.innsats[o] <= bb) { // liten blind, ingen har høgt
+        if (L.kanHogje && eq > 0.50 && rnd() < 0.85) return hogjTil(2.5 * bb);
+        if (L.kanHogje && eq > 0.40 && rnd() < 0.25) return hogjTil(2.5 * bb);
+        if (eq > 0.36 || rnd() < 0.15) return { type: 'syn' };
+        return { type: 'kast' };
+      }
+      // Store innsatsar tyder oftast sterkare hand hos motspelaren
+      const press = Math.min(1.5, L.synBelop / Math.max(1, pott - L.synBelop));
+      const eqJ = eq - (g.runde === 0 ? 0.08 : 0.18) * press;
+      if (L.kanHogje) {
+        if (eqJ > 0.85 || (eqJ > 0.70 && rnd() < 0.7)) return satsDel(0.6 + 0.3 * rnd());
+        if (g.runde > 0 && eq < 0.30 && press < 0.7 && rnd() < 0.05) return satsDel(1.0); // bløff
+      }
+      const margin = L.synBelop >= 0.4 * g.stablar[p] ? 0.04 : 0;
+      if (eqJ >= odds + margin) return { type: 'syn' };
+      return { type: 'kast' };
+    }
+
+    if (!L.kanHogje) return { type: 'sjekk' };
+    if (g.runde === 0) { // stor blind etter at liten blind berre synte
+      if (eq > 0.58 && rnd() < 0.8) return hogjTil(3.5 * bb);
+      return { type: 'sjekk' };
+    }
+    if (eq > 0.68) return rnd() < 0.82 ? satsDel(0.55 + 0.35 * rnd()) : { type: 'sjekk' };
+    if (eq > 0.52) return rnd() < 0.45 ? satsDel(0.35 + 0.2 * rnd()) : { type: 'sjekk' };
+    const bloff = (iPosisjon ? 0.22 : 0.12) + (g.runde === 3 ? 0.03 : 0);
+    if (rnd() < bloff) return satsDel(0.5 + 0.25 * rnd());
+    return { type: 'sjekk' };
+  }
+
+  return { RANKS, nyStokk, evaluer, handNamn, vinnarsjanse, nyttSpel, startHand, lovleg, handling, botVal };
+})();
+</script>
+
+<script>
+/* ===== Brukargrensesnitt ===== */
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const FARGE = ['♠', '♥', '♦', '♣'];
+  const sov = (ms) => new Promise((r) => setTimeout(r, ms));
+  const FART = window.POKER_FART === undefined ? 1 : window.POKER_FART; // 0 = ingen pausar (til testing)
+
+  /* Lyd laga med Web Audio, ingen lydfiler. */
+  const Lyd = (() => {
+    let ctx = null, paa = true;
+    try { paa = localStorage.getItem('pokerLyd') !== 'av'; } catch (e) {}
+    function ac() {
+      if (!paa) return null;
+      try {
+        if (!ctx) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; ctx = new A(); }
+        if (ctx.state !== 'running') { ctx.resume(); return null; } // ventar på første klikk
+        return ctx;
+      } catch (e) { return null; }
+    }
+    function tone(f, t0, dur, type, vol, f2) {
+      const c = ac(); if (!c) return;
+      const o = c.createOscillator(), v = c.createGain(), t = c.currentTime + t0;
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+      v.gain.setValueAtTime(0.0001, t);
+      v.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+      v.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(v); v.connect(c.destination); o.start(t); o.stop(t + dur + 0.03);
+    }
+    function sus(t0, dur, vol, type, frek) {
+      const c = ac(); if (!c) return;
+      const n = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const src = c.createBufferSource(), fl = c.createBiquadFilter(), v = c.createGain();
+      src.buffer = buf; fl.type = type; fl.frequency.value = frek; v.gain.value = vol;
+      src.connect(fl); fl.connect(v); v.connect(c.destination); src.start(c.currentTime + t0);
+    }
+    const melodi = (ns, steg, dur, type, vol) => ns.forEach((f, i) => tone(f, i * steg, dur, type, vol));
+    return {
+      get paa() { return paa; },
+      byt() { paa = !paa; try { localStorage.setItem('pokerLyd', paa ? 'paa' : 'av'); } catch (e) {} if (paa) ac(); return paa; },
+      vekk() { ac(); },
+      kort(n) { for (let i = 0; i < (n || 1); i++) sus(i * 0.09, 0.07, 0.3, 'highpass', 2500); },
+      sjetong(n) { for (let i = 0; i < (n || 2); i++) { const f = 2400 + Math.random() * 900; tone(f, i * 0.055, 0.06, 'triangle', 0.14); tone(f * 1.52, i * 0.055, 0.04, 'sine', 0.07); } },
+      sjekk() { tone(150, 0, 0.07, 'sine', 0.5, 80); tone(150, 0.13, 0.07, 'sine', 0.5, 80); },
+      kast() { sus(0, 0.22, 0.25, 'lowpass', 900); },
+      vinn() { melodi([523, 659, 784, 1047], 0.1, 0.28, 'triangle', 0.2); },
+      tap() { tone(330, 0, 0.28, 'sine', 0.22, 247); tone(247, 0.25, 0.45, 'sine', 0.22, 165); },
+      siger() { melodi([523, 659, 784, 1047, 784, 1047, 1319], 0.12, 0.35, 'triangle', 0.22); },
+      nederlag() { melodi([392, 330, 262, 196], 0.22, 0.5, 'sine', 0.22); }
+    };
+  })();
+
+  function sjetongHTML(n) {
+    let h = '';
+    for (const [v, f] of [[100, '#2b2b2b'], [50, '#1565c0'], [10, '#c62828']]) {
+      let k = Math.floor(n / v); n -= k * v;
+      while (k > 0) {
+        const m = Math.min(5, k); k -= m;
+        h += '<span class="soyle">' + ('<i class="sj" style="--f:' + f + '"></i>').repeat(m) + '</span>';
+      }
+    }
+    return h;
+  }
+  const sistHTML = {};
+  function setHTML(id, h) { if (sistHTML[id] !== h) { sistHTML[id] = h; $(id).innerHTML = h; } }
+
+  // Finn dei fem korta som utgjer beste hand
+  function besteFem(kort) {
+    const mal = Poker.evaluer(kort), n = kort.length;
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) {
+      const fem = kort.filter((_, i) => i !== a && i !== b);
+      if (Poker.evaluer(fem) === mal) return fem;
+    }
+    return kort;
+  }
+  function markerVinnarkort(r) {
+    const vinnarar = r.vinnar === -1 ? [0, 1] : [r.vinnar];
+    const gode = new Set();
+    for (const v of vinnarar) for (const c of besteFem(g.hol[v].concat(g.bord))) gode.add(v + ':' + c);
+    const merk = (id, sjekk) => document.querySelectorAll('#' + id + ' .kort').forEach((el) => {
+      el.classList.add(sjekk(+el.dataset.c) ? 'vinnarkort' : 'dempa');
+    });
+    for (let i = 0; i < 2; i++) merk('kort' + i, (c) => gode.has(i + ':' + c));
+    merk('bordkort', (c) => vinnarar.some((v) => gode.has(v + ':' + c)));
+  }
+
+  let g, vist = 0, visBot = false, resultatVist = false, modus = 'vent', botSeier = '', L = null;
+
+  function kortHTML(c) {
+    if (c === null) return '<div class="kort bak" aria-label="Skjult kort"></div>';
+    if (c === undefined) return '<div class="kort tom"></div>';
+    const r = Poker.RANKS[c >> 2], s = c & 3;
+    return '<div data-c="' + c + '" class="kort' + (s === 1 || s === 2 ? ' raud' : '') + '"><span class="r">' +
+      (r === 'T' ? '10' : r) + '</span><span class="s">' + FARGE[s] + '</span></div>';
+  }
+  // Set innhaldet berre når det er endra, og animer berre kort som er nye.
+  const forrige = {};
+  function setKort(id, kort) {
+    const nokkel = kort.map((c) => (c === undefined ? '-' : c === null ? 'x' : c)).join(',');
+    const gamle = (forrige[id] || '').split(',');
+    if (forrige[id] === nokkel) return;
+    forrige[id] = nokkel;
+    $(id).innerHTML = kort.map((c, i) => {
+      const h = kortHTML(c);
+      const ny = c !== undefined && String(c === null ? 'x' : c) !== gamle[i];
+      return ny ? h.replace('class="kort', 'class="kort ny') : h;
+    }).join('');
+  }
+
+  function logg(t) {
+    const el = $('logg');
+    el.insertAdjacentHTML('beforeend', '<div></div>');
+    el.lastChild.textContent = t;
+    el.scrollTop = el.scrollHeight;
+  }
+  function status(t) { $('status').textContent = t; }
+
+  function teikn() {
+    const stablar = g.fase === 'ferdig' && !resultatVist ? g.forUtbetaling : g.stablar;
+    const bord = g.bord.slice(0, vist);
+    $('info').textContent = 'Hand ' + g.handNr + ' · Blindar ' + g.sb + '/' + g.bb;
+    for (let i = 0; i < 2; i++) {
+      $('stabel' + i).textContent = stablar[i];
+      $('d' + i).classList.toggle('skjult', g.knapp !== i);
+      setHTML('sj' + i, sjetongHTML(stablar[i]));
+      setHTML('innsats' + i, g.innsats[i] > 0 ? '<span class="sjetongar liten">' + sjetongHTML(g.innsats[i]) + '</span>Innsats: ' + g.innsats[i] : '');
+      const avgjort = resultatVist && g.resultat && g.resultat.vinnar >= 0;
+      $('sete' + i).classList.toggle('vinnar', avgjort && g.resultat.vinnar === i);
+      $('sete' + i).classList.toggle('tapar', avgjort && g.resultat.vinnar !== i);
+    }
+    setKort('kort0', g.hol[0]);
+    setKort('kort1', visBot ? g.hol[1] : [null, null]);
+    setKort('bordkort', [0, 1, 2, 3, 4].map((i) => bord[i]));
+    const pott = g.fase === 'ferdig' ? g.resultat.pott : g.pott + g.innsats[0] + g.innsats[1];
+    $('pott').textContent = 'Pott: ' + pott;
+    $('pott').classList.toggle('skjult', resultatVist);
+    setHTML('pottsj', resultatVist ? '' : sjetongHTML(pott));
+    $('banner').classList.toggle('skjult', !resultatVist);
+    $('hand0').textContent = 'Du har: ' + Poker.handNamn(Poker.evaluer(g.hol[0].concat(bord)));
+    $('hand1').textContent = visBot ? 'Boten har: ' + Poker.handNamn(Poker.evaluer(g.hol[1].concat(bord))) : '';
+    $('snakk').textContent = botSeier;
+    $('snakk').classList.toggle('synleg', !!botSeier);
+
+    const tur = modus === 'tur';
+    $('handlingar').classList.toggle('skjult', modus === 'neste');
+    $('hogjrad').classList.toggle('skjult', modus === 'neste' || !tur || !L.kanHogje);
+    $('mellom').classList.toggle('skjult', modus !== 'neste');
+    $('bKast').disabled = !tur || L.kanSjekke;
+    $('bSyn').disabled = !tur;
+    $('bHogj').disabled = !tur || !L.kanHogje;
+    if (tur) {
+      $('bSyn').textContent = L.kanSjekke ? 'Sjekk' : 'Syn ' + L.synBelop;
+      oppdaterHogjKnapp();
+    }
+  }
+
+  function oppdaterHogjKnapp() {
+    if (!L || !L.kanHogje) { $('bHogj').textContent = 'Høgj'; return; }
+    const v = valtBelop();
+    const allIn = v === g.innsats[0] + g.stablar[0];
+    $('bHogj').textContent = allIn ? 'All-in ' + v : (L.maks === 0 ? 'Sats ' : 'Høgj til ') + v;
+  }
+  function valtBelop() {
+    let v = parseInt($('belop').value, 10);
+    if (isNaN(v)) v = L.minTil;
+    return Math.max(L.minTil, Math.min(L.maksTil, v));
+  }
+  function setBelop(v) {
+    v = Math.max(L.minTil, Math.min(L.maksTil, Math.round(v)));
+    $('belop').value = v; $('glidar').value = v;
+    oppdaterHogjKnapp();
+  }
+  function klargjerHogjing() {
+    if (!L.kanHogje) return;
+    const gl = $('glidar');
+    gl.min = L.minTil; gl.max = L.maksTil;
+    gl.step = (L.maksTil - L.minTil) % g.sb === 0 ? g.sb : 1;
+    $('belop').min = L.minTil; $('belop').max = L.maksTil;
+    setBelop(L.minTil);
+  }
+
+  function skildre(p, a, L) {
+    const kven = p === 0 ? 'Du' : 'Boten';
+    if (a.type === 'kast') return kven + ' kastar.';
+    if (a.type === 'sjekk') return kven + ' sjekkar.';
+    if (a.type === 'syn') return kven + ' syner ' + L.synBelop + (L.synBelop === g.stablar[p] ? ' og er all-in.' : '.');
+    const til = Math.max(L.minTil, Math.min(L.maksTil, Math.round(a.til)));
+    if (til === g.innsats[p] + g.stablar[p]) return kven + ' går all-in med ' + til + '.';
+    return kven + (L.maks === 0 ? ' satsar ' : ' høgjer til ') + til + '.';
+  }
+
+  function utfor(p, a) {
+    const t = skildre(p, a, Poker.lovleg(g));
+    const allIn = a.type !== 'kast' && a.type !== 'sjekk' && /all-in/.test(t);
+    Poker.handling(g, a);
+    if (a.type === 'kast') Lyd.kast(); else if (a.type === 'sjekk') Lyd.sjekk(); else Lyd.sjetong(allIn ? 7 : a.type === 'hogj' ? 3 : 2);
+    logg(t);
+    if (p === 1) botSeier = t.replace('Boten ', '').replace(/\.$/, '').replace(/^./, (c) => c.toUpperCase());
+    status(t);
+  }
+
+  async function vidare() {
+    for (;;) {
+      if (g.fase === 'ferdig' && g.resultat.type === 'visning' && !visBot) {
+        visBot = true; modus = 'vent'; teikn(); await sov(800 * FART);
+      }
+      while (vist < g.bord.length) {
+        Lyd.kort(vist < 3 ? 3 : 1);
+        vist = vist < 3 ? 3 : vist + 1;
+        modus = 'vent'; teikn();
+        await sov((g.fase === 'ferdig' ? 1000 : 450) * FART);
+      }
+      if (g.fase === 'ferdig') return visResultat();
+      if (g.tur === 1) {
+        modus = 'vent'; status('Boten tenkjer …'); teikn();
+        await sov((600 + Math.random() * 700) * FART);
+        utfor(1, Poker.botVal(g));
+        continue;
+      }
+      L = Poker.lovleg(g); modus = 'tur';
+      klargjerHogjing(); teikn();
+      status(L.kanSjekke ? 'Din tur.' : 'Din tur. Det kostar ' + L.synBelop + ' å syne.');
+      return;
+    }
+  }
+
+  function visResultat() {
+    const r = g.resultat;
+    resultatVist = true;
+    let t;
+    if (r.type === 'kast') t = (r.vinnar === 0 ? 'Boten kasta. Du vinn ' : 'Du kasta. Boten vinn ') + r.pott + '.';
+    else if (r.vinnar === -1) t = 'Delt pott på ' + r.pott + ', de har like gode hender.';
+    else t = (r.vinnar === 0 ? 'Du vinn ' : 'Boten vinn ') + r.pott + ' med ' + Poker.handNamn(r.poeng[r.vinnar]) + '.';
+    const slutt = g.stablar[0] === 0 || g.stablar[1] === 0;
+    if (slutt) t += g.stablar[1] === 0 ? ' Du har vunne alle sjetongane! 🏆' : ' Boten tok alle sjetongane.';
+    $('bNeste').textContent = slutt ? 'Nytt spel' : 'Neste hand';
+    modus = 'neste';
+    const bn = $('banner');
+    bn.className = r.vinnar === 0 ? 'du' : r.vinnar === 1 ? 'bot' : 'delt';
+    bn.textContent = slutt ? (g.stablar[1] === 0 ? '🏆 Du vann heile spelet!' : 'Boten vann spelet')
+      : r.vinnar === 0 ? '🏆 Du vinn ' + r.pott + '!' : r.vinnar === 1 ? 'Boten vinn ' + r.pott : 'Delt pott';
+    logg(t); status(t); teikn();
+    if (r.type === 'visning') markerVinnarkort(r);
+    if (slutt) { if (g.stablar[1] === 0) Lyd.siger(); else Lyd.nederlag(); }
+    else if (r.vinnar === 0) { Lyd.sjetong(5); Lyd.vinn(); }
+    else if (r.vinnar === 1) Lyd.tap();
+    else Lyd.sjetong(4);
+  }
+
+  function nyHand() {
+    if (!g || g.stablar[0] === 0 || g.stablar[1] === 0) g = Poker.nyttSpel();
+    vist = 0; visBot = false; resultatVist = false; botSeier = ''; L = null; modus = 'vent';
+    $('logg').innerHTML = '';
+    for (const k in forrige) delete forrige[k];
+    Poker.startHand(g);
+    Lyd.kort(2);
+    logg('Hand ' + g.handNr + ': ' + (g.knapp === 0 ? 'du har' : 'boten har') + ' D-knappen og legg liten blind.');
+    vidare();
+  }
+
+  function spelar(a) {
+    if (modus !== 'tur') return;
+    modus = 'vent';
+    utfor(0, a);
+    vidare();
+  }
+
+  $('bKast').onclick = () => spelar({ type: 'kast' });
+  $('bSyn').onclick = () => spelar({ type: L.kanSjekke ? 'sjekk' : 'syn' });
+  $('bHogj').onclick = () => spelar({ type: 'hogj', til: valtBelop() });
+  $('bNeste').onclick = nyHand;
+  const visLyd = () => { $('bLyd').textContent = Lyd.paa ? '🔊' : '🔇'; };
+  $('bLyd').onclick = () => { Lyd.byt(); visLyd(); };
+  visLyd();
+  document.addEventListener('pointerdown', () => Lyd.vekk(), { once: true });
+  $('glidar').oninput = (e) => {
+    const v = +e.target.value;
+    $('belop').value = v; oppdaterHogjKnapp();
+  };
+  $('belop').oninput = () => { if (L) { $('glidar').value = valtBelop(); oppdaterHogjKnapp(); } };
+  $('belop').onchange = () => { if (L) setBelop(valtBelop()); };
+  document.querySelectorAll('[data-snarveg]').forEach((k) => {
+    k.onclick = () => {
+      if (modus !== 'tur' || !L.kanHogje) return;
+      const s = k.dataset.snarveg, etterSyn = L.pott + L.synBelop;
+      if (s === 'min') setBelop(L.minTil);
+      else if (s === 'halv') setBelop(L.maks + Math.round(etterSyn / 2 / g.sb) * g.sb);
+      else if (s === 'pott') setBelop(L.maks + etterSyn);
+      else setBelop(L.maksTil);
+    };
+  });
+
+  window.__poker = { get g() { return g; }, get modus() { return modus; } };
+  nyHand();
+})();
+</script>
+</body>
+</html>

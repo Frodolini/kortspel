@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kortspel</title>
+<style>
+  :root { --gron: #2e7d32; --gron-mork: #1b5e20; --bakgrunn: #12181b; --panel: #1c2529; --tekst: #eef3ef; --dempa: #9fb0a6; --gull: #ffd54a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bakgrunn); color: var(--tekst); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+  header { background: var(--gron); color: #fff; padding: 14px 18px; box-shadow: 0 3px 0 var(--gron-mork); }
+  header h1 { margin: 0; font-size: 1.35rem; }
+  main { max-width: 860px; margin: 0 auto; padding: 22px 14px; }
+  p.intro { color: var(--dempa); margin: 0 0 18px; }
+  .spel { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+  a.flis {
+    display: block; text-decoration: none; color: inherit; background: var(--panel);
+    border-radius: 16px; padding: 18px; border: 2px solid transparent;
+    box-shadow: 0 5px 0 rgba(0,0,0,.45); transition: transform .15s, border-color .15s;
+  }
+  a.flis:hover, a.flis:focus-visible { transform: translateY(-3px); border-color: var(--gull); outline: none; }
+  .vifte { display: flex; height: 92px; margin-bottom: 12px; padding-left: 8px; }
+  .k {
+    width: 58px; height: 82px; border-radius: 7px; background: #fdfdfb; color: #151515;
+    display: flex; align-items: center; justify-content: center; font-size: 1.7rem; font-weight: 800;
+    box-shadow: 0 2px 6px rgba(0,0,0,.5); margin-left: -14px; transform-origin: bottom center;
+  }
+  .k:nth-child(1) { transform: rotate(-12deg); margin-left: 0; }
+  .k:nth-child(3) { transform: rotate(12deg); }
+  .k.r { color: #c62828; }
+  .k.b { color: #1a3a8a; }
+  a.flis h2 { margin: 0 0 6px; font-size: 1.15rem; }
+  a.flis p { margin: 0; color: var(--dempa); font-size: .93rem; line-height: 1.4; }
+  footer { text-align: center; color: var(--dempa); font-size: .8rem; padding: 18px; }
+</style>
+</head>
+<body>
+<header><h1>♠ Kortspel</h1></header>
+<main>
+  <p class="intro">Tre kortspel som køyrer rett i nettlesaren. Ingen innlogging, ingen ekte pengar.</p>
+  <div class="spel">
+    <a class="flis" href="poker.html">
+      <div class="vifte"><div class="k">A♠</div><div class="k r">K♥</div><div class="k">Q♣</div></div>
+      <h2>Texas Hold'em</h2>
+      <p>Ein mot ein mot ein bot som reknar odds og bløffar av og til.</p>
+    </a>
+    <a class="flis" href="kabal.html">
+      <div class="vifte"><div class="k b">&lt;/&gt;</div><div class="k r">7</div><div class="k b">K</div></div>
+      <h2>IT-kabalen</h2>
+      <p>Sjukabal der fargane er nettverk, tryggleik, kode og maskinvare.</p>
+    </a>
+    <a class="flis" href="vri-atter.html">
+      <div class="vifte"><div class="k r">8♦</div><div class="k">8♠</div><div class="k r">8♥</div></div>
+      <h2>Vri åtter</h2>
+      <p>Bli kvitt korta dine før boten. Åttarane vrir fargen.</p>
+    </a>
+  </div>
+</main>
+<footer>Laga for moro skuld.</footer>
+</body>
+</html>
